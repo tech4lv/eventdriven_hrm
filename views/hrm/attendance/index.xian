@@ -1,0 +1,249 @@
+{{> hrm-open}}
+{{> hrm-timecard}}
+<div class="card p-4 mb-4 flex flex-wrap items-end gap-3">
+  <form class="flex flex-wrap items-end gap-3 flex-1" method="GET">
+    <div>
+      <label class="lbl">Date</label>
+      <div class="flex gap-1">
+        <a class="btn-ghost" href="?date={{ prevDate }}">‹</a>
+        <input
+          class="inp w-auto"
+          type="date"
+          name="date"
+          value="{{ date }}"
+          max="{{ today }}"
+          data-autosubmit
+        />
+        <a class="btn-ghost" href="?date={{ nextDate }}">›</a>
+      </div>
+    </div>
+    <div class="flex-1 min-w-[10rem]">
+      <label class="lbl">Search</label>
+      <input class="inp" name="q" value="{{ q }}" placeholder="Name or ID" />
+    </div>
+    <div>
+      <label class="lbl">Department</label>
+      <select class="inp" name="departmentId" data-autosubmit>
+        <option value="">All</option>
+        {{#each departments}}
+          <option
+            value="{{ id }}"
+            {{sel id ../departmentId}}
+          >
+            {{ name }}
+          </option>
+        {{/each}}
+      </select>
+    </div>
+    <div>
+      <label class="lbl">Status</label>
+      <select class="inp" name="status" data-autosubmit>
+        <option value="">All</option>
+        <option
+          value="present"
+          {{sel status "present"}}
+        >
+          Present
+        </option>
+        <option
+          value="late"
+          {{sel status "late"}}
+        >
+          Late
+        </option>
+        <option
+          value="absent"
+          {{sel status "absent"}}
+        >
+          Absent
+        </option>
+        <option
+          value="on_leave"
+          {{sel status "on_leave"}}
+        >
+          On leave
+        </option>
+        <option
+          value="not_in"
+          {{sel status "not_in"}}
+        >
+          Not in yet
+        </option>
+        <option
+          value="day_off"
+          {{sel status "day_off"}}
+        >
+          Day off
+        </option>
+      </select>
+    </div>
+    <button class="btn-ghost">Apply</button>
+  </form>
+  {{#if isPast}}
+    <form
+      method="POST"
+      action="/hrm/attendance/generate-absences"
+      data-title="Generate absences"
+      data-btn="Generate"
+      data-confirm="Create ‘absent’ records for scheduled employees with no attendance or approved leave on {{fmtDate date}}?"
+    >
+      {{> hrm-csrf}}
+      <input type="hidden" name="date" value="{{ date }}" />
+      <button class="btn-ghost">Generate absences</button>
+    </form>
+  {{/if}}
+</div>
+
+<div
+  class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4 text-center"
+>
+  <div class="card p-3">
+    <div class="text-2xl font-black text-emerald-600">{{ counts.present }}</div>
+    <div class="text-xs text-slate-500">Present</div>
+  </div>
+  <div class="card p-3">
+    <div class="text-2xl font-black text-amber-600">{{ counts.late }}</div>
+    <div class="text-xs text-slate-500">Late</div>
+  </div>
+  <div class="card p-3">
+    <div class="text-2xl font-black text-red-600">{{ counts.absent }}</div>
+    <div class="text-xs text-slate-500">Absent</div>
+  </div>
+  <div class="card p-3">
+    <div class="text-2xl font-black text-sky-600">{{ counts.on_leave }}</div>
+    <div class="text-xs text-slate-500">On leave</div>
+  </div>
+  <div class="card p-3">
+    <div class="text-2xl font-black text-slate-500">{{ counts.not_in }}</div>
+    <div class="text-xs text-slate-500">Not in yet</div>
+  </div>
+  <div class="card p-3">
+    <div class="text-2xl font-black text-slate-400">{{ counts.day_off }}</div>
+    <div class="text-xs text-slate-500">Day off</div>
+  </div>
+</div>
+
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Department</th>
+          <th>Shift</th>
+          <th>Time in</th>
+          <th>Time out</th>
+          <th>Hours</th>
+          <th>Status</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+          <tr>
+            <td>
+              <a
+                class="font-semibold hover:text-amber-700"
+                href="/hrm/attendance/calendar?employeeId={{ employee.id }}"
+              >{{ employee.fullName }}</a>
+              <div class="font-mono text-xs text-slate-400">
+                {{ employee.employeeNo }}
+              </div>
+            </td>
+            <td>
+              {{#if employee.department}}{{ employee.department.name }}{{else}}—{{/if}}
+            </td>
+            <td class="whitespace-nowrap text-slate-500">
+              {{fmtTime shiftStart}}
+            </td>
+            <td>{{fmtTime record.timeIn}}</td>
+            <td>{{fmtTime record.timeOut}}</td>
+            <td>{{ hours }}</td>
+            <td>
+              {{badge status}}{{#if record.minutesLate}} <span
+                class="text-xs text-amber-600"
+              >+{{ record.minutesLate }}m</span>{{/if}}{{#if derived}} <span
+                class="text-[10px] text-slate-400"
+              >(no record)</span>{{/if}}
+            </td>
+            <td class="text-right whitespace-nowrap">
+              <button
+                class="btn-ghost btn-sm"
+                data-modal="attModal"
+                data-heading="Record attendance — {{ employee.fullName }}"
+                data-action="/hrm/attendance/save"
+                data-record="{{json (attRecord employee.id ../date record)}}"
+              >{{#if record}}Edit{{else}}Record{{/if}}</button>
+              {{#if record}}
+                <form
+                  class="inline"
+                  method="POST"
+                  action="/hrm/attendance/{{ record.id }}/delete"
+                  data-title="Delete record"
+                  data-btn="Delete"
+                  data-confirm="Delete this attendance record for {{ employee.fullName }}?"
+                >
+                  {{> hrm-csrf}}<button class="btn-danger btn-sm"
+                  >Delete</button>
+                </form>
+              {{/if}}
+            </td>
+          </tr>
+        {{else}}
+          <tr>
+            <td class="text-center text-slate-400 py-10" colspan="8">
+              No employees to show.
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div
+  id="attModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4"
+>
+  <div class="card w-full max-w-md p-6">
+    <h3 class="font-bold text-lg mb-4" data-title>Record attendance</h3>
+    <form class="space-y-3" method="POST" action="/hrm/attendance/save">
+      {{> hrm-csrf}}
+      <input type="hidden" name="employeeId" />
+      <input type="hidden" name="date" />
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="lbl">Time in</label>
+          <input class="inp" type="time" name="timeIn" />
+        </div>
+        <div>
+          <label class="lbl">Time out</label>
+          <input class="inp" type="time" name="timeOut" />
+        </div>
+      </div>
+      <p class="text-[11px] text-slate-500">
+        Time out earlier than time in is treated as the next day (overnight).
+      </p>
+      <div>
+        <label class="lbl">Status</label>
+        <select class="inp" name="status">
+          <option value="auto">Auto (from time in)</option>
+          <option value="present">Present</option>
+          <option value="late">Late</option>
+          <option value="half_day">Half day</option>
+          <option value="absent">Absent</option>
+          <option value="on_leave">On leave</option>
+        </select>
+      </div>
+      <div>
+        <label class="lbl">Remarks</label>
+        <input class="inp" name="remarks" maxlength="255" />
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button class="btn-ghost" type="button" data-close
+        >Cancel</button><button class="btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{{> hrm-close}}

@@ -1,0 +1,64 @@
+{{#if self}}
+  <div
+    class="
+      card
+      p-5
+      mb-4
+      flex
+      flex-wrap
+      items-center
+      justify-between
+      gap-4
+      border-l-4
+      {{#if self.record.timeOut}}
+        border-l-emerald-500
+      {{else if self.record.timeIn}}
+        border-l-amber-500
+      {{else}}
+        border-l-blue-500
+      {{/if}}
+    "
+  >
+    <div>
+      <div class="text-xs uppercase tracking-widest text-slate-400">
+        My attendance today
+      </div>
+      <div class="text-lg font-bold">
+        {{ self.employee.firstName }} {{ self.employee.lastName }}
+      </div>
+      <div class="text-sm text-slate-500 mt-0.5">
+        {{#if self.record.timeIn}}In: <b>{{fmtTime self.record.timeIn}}</b>{{/if}}{{#if self.record.timeOut}} · Out: <b>{{fmtTime self.record.timeOut}}</b>{{/if}}{{#if self.record}} {{badge self.record.status}}{{else}}You have not timed in yet.{{/if}}
+      </div>
+    </div>
+    <div class="flex gap-2 items-center">
+      {{#if self.record.timeIn}}
+        {{#if self.record.timeOut}}
+      <span
+        class="
+          inline-flex
+          items-center
+          gap-2
+          rounded-lg
+          bg-emerald-50
+          text-emerald-700
+          border
+          border-emerald-200
+          px-5
+          py-3
+          text-base
+          font-bold
+        "
+      >✓ Done for today</span>
+      {{else}}
+          <form method="POST" action="/hrm/attendance/time-out">
+            {{> hrm-csrf}}<button class="btn-primary btn-lg">■ Time out</button>
+          </form>
+        {{/if}}
+      {{else}}
+        <form method="POST" action="/hrm/attendance/time-in">
+          {{> hrm-csrf}}<button class="btn-primary btn-lg">▶ Time in</button>
+        </form>
+      {{/if}}
+    </div>
+  </div>
+{{/if}}

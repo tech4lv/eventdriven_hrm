@@ -1,0 +1,7 @@
+{
+  "editor.inlineSuggest.enabled": false,
+  "files.associations": {
+    "*.xian": "html"
+  },
+  "devin.implicitContext.enabled": false
+}

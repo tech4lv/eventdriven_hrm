@@ -1,0 +1,77 @@
+{{> hrm-open}}
+{{#if rows}}
+  <div class="card overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Last working day</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Reviewed</th>
+            <th class="text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each rows}}
+            <tr>
+              <td>
+                <a
+                  class="font-semibold text-amber-700 hover:underline"
+                  href="/hrm/employees/{{ id }}"
+                >{{ fullName }}</a>
+                <div class="text-xs text-slate-400">
+                  {{ employeeNo }}{{#if department}} · {{ department.name }}{{/if}}{{#if position}} · {{ position.title }}{{/if}}
+                </div>
+              </td>
+              <td>{{ fmtDate resignationDate }}</td>
+              <td class="max-w-[16rem]">
+                <div class="text-sm">{{ resignationReason }}</div>
+              </td>
+              <td>{{ badge resignationStatus }}</td>
+              <td class="text-xs text-slate-500">
+                {{#if resignationReviewedAt}}
+                  {{ fmtDate resignationReviewedAt }}<br />
+                  {{#if resignationReviewer}}{{ resignationReviewer.name }}{{/if}}
+                  {{#if resignationReviewRemarks}}<div class="text-slate-400">{{ resignationReviewRemarks }}</div>{{/if}}
+                {{else}}—{{/if}}
+              </td>
+              <td class="text-right whitespace-nowrap">
+                {{#if canReview}}
+                  <form
+                    class="inline"
+                    method="POST"
+                    action="/hrm/resignations/{{ id }}/approve"
+                    data-title="Approve resignation"
+                    data-btn="Approve"
+                    data-confirm="Approve the resignation of {{ fullName }}? Their record will be marked as resigned."
+                  >
+                    {{> hrm-csrf}}<button class="btn-primary btn-sm"
+                    >Approve</button>
+                  </form>
+                  <form
+                    class="inline"
+                    method="POST"
+                    action="/hrm/resignations/{{ id }}/reject"
+                    data-title="Reject resignation"
+                    data-btn="Reject"
+                    data-confirm="Reject the resignation of {{ fullName }}? They will remain active."
+                  >
+                    {{> hrm-csrf}}<button class="btn-danger btn-sm"
+                    >Reject</button>
+                  </form>
+                {{else}}—{{/if}}
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{{else}}
+  <div class="card p-10 text-center text-slate-400">
+    No resignation requests yet.
+  </div>
+{{/if}}
+{{> hrm-close}}

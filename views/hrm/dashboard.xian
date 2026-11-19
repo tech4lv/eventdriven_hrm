@@ -1,0 +1,174 @@
+{{> hrm-open}}
+<div class="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 mb-6">
+  <div class="card p-4">
+    <div class="text-xs text-slate-500 font-semibold">Total employees</div>
+    <div class="text-3xl font-black mt-1">{{ total }}</div>
+  </div>
+  <div class="card p-4">
+    <div class="text-xs text-slate-500 font-semibold">Active employees</div>
+    <div class="text-3xl font-black mt-1 text-emerald-600">{{ active_n }}</div>
+  </div>
+  <div class="card p-4">
+    <div class="text-xs text-slate-500 font-semibold">Present today</div>
+    <div class="text-3xl font-black mt-1 text-emerald-600">{{ present }}</div>
+    <div class="text-xs text-slate-400">{{ late }} late</div>
+  </div>
+  <div class="card p-4">
+    <div class="text-xs text-slate-500 font-semibold">Absent / not in yet</div>
+    <div class="text-3xl font-black mt-1 text-red-600">{{ absent }}</div>
+  </div>
+  <div class="card p-4">
+    <div class="text-xs text-slate-500 font-semibold">On leave</div>
+    <div class="text-3xl font-black mt-1 text-sky-600">{{ onLeave }}</div>
+  </div>
+  <div class="card p-4 col-span-2 xl:col-span-2 border-amber-300 bg-amber-50">
+    <div class="text-xs text-amber-700 font-semibold">
+      Pending leave applications
+    </div>
+    <div class="flex items-end justify-between">
+      <div class="text-3xl font-black mt-1 text-amber-600">
+        {{ pendingCount }}
+      </div>
+      <a
+        class="text-xs font-semibold text-amber-700 hover:underline"
+        href="/hrm/leave?status=pending"
+      >Review →</a>
+    </div>
+  </div>
+</div>
+
+<div class="grid lg:grid-cols-3 gap-4 mb-4">
+  <div class="card p-5 lg:col-span-2">
+    <h2 class="font-bold mb-3">Attendance — last 7 days</h2>
+    <div class="h-64">
+      <canvas id="trendChart"></canvas>
+    </div>
+  </div>
+  <div class="card p-5">
+    <h2 class="font-bold mb-3">Employees by department</h2>
+    <div class="h-64">
+      <canvas id="deptChart"></canvas>
+    </div>
+  </div>
+</div>
+<div class="grid lg:grid-cols-3 gap-4">
+  <div class="card p-5">
+    <h2 class="font-bold mb-3">Employment status</h2>
+    <div class="h-52">
+      <canvas id="statusChart"></canvas>
+    </div>
+  </div>
+  <div class="card lg:col-span-2">
+    <div class="px-5 py-4 flex justify-between items-center">
+      <h2 class="font-bold">Awaiting your approval</h2>
+      <a
+        class="text-sm text-amber-700 font-semibold hover:underline"
+        href="/hrm/leave?status=pending"
+      >View all</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Employee</th>
+            <th>Type</th>
+            <th>Dates</th>
+            <th>Days</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each pending}}
+            <tr>
+              <td class="font-medium">{{ employee.fullName }}</td>
+              <td>{{ leaveType.name }}</td>
+              <td>{{fmtDate startDate}} – {{fmtDate endDate}}</td>
+              <td>{{ days }}</td>
+            </tr>
+          {{else}}
+            <tr>
+              <td class="text-center text-slate-400 py-8" colspan="4">
+                Nothing pending 🎉
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script id="chartData" type="application/json">{{{chartJson}}}</script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"
+></script>
+<script>
+  const d = JSON.parse(document.getElementById("chartData").textContent);
+  const pal = [
+    "#f59e0b",
+    "#0ea5e9",
+    "#10b981",
+    "#8b5cf6",
+    "#ef4444",
+    "#64748b",
+    "#ec4899",
+  ];
+  const opt = { responsive: true, maintainAspectRatio: false };
+  if (window.Chart) {
+    new Chart("trendChart", {
+      type: "bar",
+      data: {
+        labels: d.trend.map((t) => t.date),
+        datasets: [
+          {
+            label: "Present",
+            data: d.trend.map((t) => t.present),
+            backgroundColor: "#10b981",
+          },
+          {
+            label: "Late",
+            data: d.trend.map((t) => t.late),
+            backgroundColor: "#f59e0b",
+          },
+          {
+            label: "On leave",
+            data: d.trend.map((t) => t.leave),
+            backgroundColor: "#0ea5e9",
+          },
+          {
+            label: "Absent",
+            data: d.trend.map((t) => t.absent),
+            backgroundColor: "#ef4444",
+          },
+        ],
+      },
+      options: {
+        ...opt,
+        scales: {
+          x: { stacked: true },
+          y: { stacked: true, beginAtZero: true, ticks: { precision: 0 } },
+        },
+      },
+    });
+    new Chart("deptChart", {
+      type: "bar",
+      data: {
+        labels: d.dept.labels,
+        datasets: [{ data: d.dept.data, backgroundColor: pal }],
+      },
+      options: {
+        ...opt,
+        indexAxis: "y",
+        plugins: { legend: { display: false } },
+        scales: { x: { beginAtZero: true, ticks: { precision: 0 } } },
+      },
+    });
+    new Chart("statusChart", {
+      type: "doughnut",
+      data: {
+        labels: d.status.labels,
+        datasets: [{ data: d.status.data, backgroundColor: pal }],
+      },
+      options: { ...opt, plugins: { legend: { position: "right" } } },
+    });
+  }
+</script>
+{{> hrm-close}}

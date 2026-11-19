@@ -1,0 +1,135 @@
+{{> hrm-open}}
+<form class="card p-4 mb-4 flex flex-wrap gap-3" method="GET">
+  <input
+    class="inp w-64"
+    name="q"
+    value="{{ q }}"
+    placeholder="Search employee…"
+  />
+  <select class="inp w-56" name="departmentId" data-autosubmit>
+    <option value="">All departments</option>
+    {{#each departments}}
+      <option
+        value="{{ id }}"
+        {{sel id ../departmentId}}
+      >
+        {{ name }}
+      </option>
+    {{/each}}
+  </select>
+  <button class="btn-ghost">Search</button>
+</form>
+<p class="text-sm text-slate-500 mb-3">
+  Schedules drive late detection, absence checks, and leave day counting. Employees without a custom schedule use the default: Mon–Sat, 8:00 AM – 5:00 PM. If shift end is earlier than shift start, it is treated as ending the next day (overnight).
+</p>
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Department</th>
+          <th>Work days</th>
+          <th>Shift</th>
+          <th>Since</th>
+          <th class="text-right"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+          <tr>
+            <td>
+              <div class="font-semibold">{{ employee.fullName }}</div>
+              <div class="font-mono text-xs text-slate-400">
+                {{ employee.employeeNo }}
+              </div>
+            </td>
+            <td>
+              {{#if employee.department}}{{ employee.department.name }}{{else}}—{{/if}}
+            </td>
+            <td class="text-xs">
+              {{ daysLabel }}{{#unless custom}} <span class="text-slate-400"
+              >(default)</span>{{/unless}}
+            </td>
+            <td class="whitespace-nowrap">
+              {{fmtTime shiftStart}} – {{fmtTime shiftEnd}}
+            </td>
+            <td>{{fmtDate effectiveFrom}}</td>
+            <td class="text-right">
+              <button
+                class="btn-ghost btn-sm"
+                data-modal="schModal"
+                data-heading="Schedule — {{ employee.fullName }}"
+                data-record="{{json (schRecord employee.id workDays shiftStart shiftEnd ../today)}}"
+              >Set schedule</button>
+            </td>
+          </tr>
+        {{else}}
+          <tr>
+            <td class="text-center text-slate-400 py-10" colspan="6">
+              No employees found.
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div
+  id="schModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4"
+>
+  <div class="card w-full max-w-md p-6">
+    <h3 class="font-bold text-lg mb-4" data-title>Work schedule</h3>
+    <form class="space-y-3" method="POST" action="/hrm/schedules">
+      {{> hrm-csrf}}
+      <input type="hidden" name="employeeId" />
+      <div>
+        <label class="lbl">Work days</label>
+        <div class="flex flex-wrap gap-2 text-sm">
+          <label class="flex items-center gap-1">
+            <input type="checkbox" name="workDays" value="1" />
+            Mon
+          </label><label class="flex items-center gap-1">
+            <input type="checkbox" name="workDays" value="2" />
+            Tue
+          </label><label class="flex items-center gap-1">
+            <input type="checkbox" name="workDays" value="3" />
+            Wed
+          </label><label class="flex items-center gap-1">
+            <input type="checkbox" name="workDays" value="4" />
+            Thu
+          </label><label class="flex items-center gap-1">
+            <input type="checkbox" name="workDays" value="5" />
+            Fri
+          </label><label class="flex items-center gap-1">
+            <input type="checkbox" name="workDays" value="6" />
+            Sat
+          </label><label class="flex items-center gap-1">
+            <input type="checkbox" name="workDays" value="0" />
+            Sun
+          </label>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="lbl">Shift start</label>
+          <input class="inp" type="time" name="shiftStart" required />
+        </div>
+        <div>
+          <label class="lbl">Shift end</label>
+          <input class="inp" type="time" name="shiftEnd" required />
+        </div>
+      </div>
+      <div>
+        <label class="lbl">Effective from</label>
+        <input class="inp" type="date" name="effectiveFrom" required />
+      </div>
+      <div class="flex justify-end gap-2">
+        <button class="btn-ghost" type="button" data-close
+        >Cancel</button><button class="btn-primary">Save schedule</button>
+      </div>
+    </form>
+  </div>
+</div>
+{{> hrm-close}}

@@ -1,0 +1,104 @@
+  </main>
+</div>
+
+<!-- Generic confirmation dialog -->
+<div
+  id="confirmModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4"
+>
+  <div class="card w-full max-w-sm p-6">
+    <h3 id="confirmTitle" class="font-bold text-lg mb-2">Are you sure?</h3>
+    <p id="confirmText" class="text-sm text-slate-600 mb-5"></p>
+    <div class="flex justify-end gap-2">
+      <button class="btn-ghost" type="button" data-close>Cancel</button>
+      <button id="confirmOk" class="btn-danger" type="button">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const $ = (s, r = document) => r.querySelector(s);
+    const open = (m) => {
+      m.classList.remove("hidden");
+      m.classList.add("flex");
+    };
+    const close = (m) => {
+      m.classList.add("hidden");
+      m.classList.remove("flex");
+    };
+    // Mobile sidebar
+    const sb = $("#sidebar"),
+      ov = $("#overlay");
+    const toggle = (show) => {
+      sb.classList.toggle("-translate-x-full", !show);
+      ov.classList.toggle("hidden", !show);
+    };
+    $("#menuBtn").addEventListener("click", () =>
+      toggle(sb.classList.contains("-translate-x-full")),
+    );
+    ov.addEventListener("click", () => toggle(false));
+
+    // Confirmation dialog for <form data-confirm="...">
+    const cm = $("#confirmModal");
+    let pending = null;
+    document.addEventListener("submit", (e) => {
+      const f = e.target;
+      if (!f.dataset.confirm || f.dataset.ok) return;
+      e.preventDefault();
+      pending = f;
+      $("#confirmTitle").textContent = f.dataset.title || "Are you sure?";
+      $("#confirmText").textContent = f.dataset.confirm;
+      $("#confirmOk").textContent = f.dataset.btn || "Confirm";
+      open(cm);
+    });
+    $("#confirmOk").addEventListener("click", () => {
+      if (pending) {
+        pending.dataset.ok = "1";
+        pending.submit();
+      }
+    });
+
+    // Form modals: <button data-modal="id" data-action="/url" data-record='{json}'>
+    document.addEventListener("click", (e) => {
+      const closer = e.target.closest("[data-close]");
+      if (closer) {
+        const m = closer.closest(".fixed");
+        if (m) close(m);
+        pending = null;
+        return;
+      }
+      const b = e.target.closest("[data-modal]");
+      if (!b) return;
+      const m = document.getElementById(b.dataset.modal),
+        f = $("form", m);
+      f.reset();
+      const rec = b.dataset.record ? JSON.parse(b.dataset.record) : null;
+      if (b.dataset.action) f.action = b.dataset.action;
+      if (rec)
+        f.querySelectorAll("[name]").forEach((i) => {
+          const v = rec[i.name];
+          if (v === undefined) return;
+          if (i.type === "checkbox")
+            i.checked =
+              typeof v === "boolean"
+                ? v
+                : String(v).split(",").includes(i.value);
+          else if (i.type !== "hidden" || i.name !== "_csrf")
+            i.value =
+              v === null ? "" : typeof v === "boolean" ? (v ? "1" : "0") : v;
+        });
+      const t = $("[data-title]", m);
+      if (t && b.dataset.heading) t.textContent = b.dataset.heading;
+      open(m);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape")
+        document.querySelectorAll(".fixed.flex").forEach(close);
+    });
+    document
+      .querySelectorAll("[data-autosubmit]")
+      .forEach((el) => el.addEventListener("change", () => el.form.submit()));
+  })();
+</script>
+{{> footer}}

@@ -1,0 +1,181 @@
+{{> hrm-open}}
+<div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+  <p class="text-sm text-slate-500">{{ count }} employee(s) found</p>
+  <a class="btn-primary" href="/hrm/employees/new">＋ Add employee</a>
+</div>
+<form
+  class="card p-4 mb-4 grid sm:grid-cols-2 lg:grid-cols-5 gap-3"
+  method="GET"
+>
+  <input
+    class="inp lg:col-span-2"
+    name="q"
+    value="{{ q }}"
+    placeholder="Search name, ID, email, phone…"
+  />
+  <select class="inp" name="departmentId" data-autosubmit>
+    <option value="">All departments</option>
+    {{#each departments}}
+      <option
+        value="{{ id }}"
+        {{sel id ../departmentId}}
+      >
+        {{ name }}
+      </option>
+    {{/each}}
+  </select>
+  <select class="inp" name="status" data-autosubmit>
+    <option value="">All statuses</option>
+    {{#each statuses}}
+      <option
+        value="{{ this }}"
+        {{sel this ../status}}
+      >
+        {{ this }}
+      </option>
+    {{/each}}
+  </select>
+  <div class="flex gap-2">
+    <select class="inp" name="active" data-autosubmit>
+      <option
+        value="1"
+        {{sel activeFilter "1"}}
+      >
+        Active
+      </option>
+      <option
+        value="0"
+        {{sel activeFilter "0"}}
+      >
+        Inactive
+      </option>
+      <option
+        value=""
+        {{sel activeFilter ""}}
+      >
+        All
+      </option>
+    </select>
+    <button class="btn-ghost">Search</button>
+  </div>
+</form>
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>ID</th>
+          <th>Department</th>
+          <th>Position</th>
+          <th>Status</th>
+          <th>Hired</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+          <tr>
+            <td>
+              <div class="flex items-center gap-3">
+                <div
+                  class="
+                    w-9
+                    h-9
+                    rounded-full
+                    bg-slate-800
+                    text-amber-400
+                    text-xs
+                    font-bold
+                    grid
+                    place-items-center
+                  "
+                >
+                  {{initials firstName lastName}}
+                </div>
+                <div>
+                  <a
+                    class="font-semibold hover:text-amber-700"
+                    href="/hrm/employees/{{ id }}"
+                  >{{ fullName }}</a>
+                  <div class="text-xs text-slate-400">{{ email }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="font-mono text-xs">{{ employeeNo }}</td>
+            <td>
+              {{#if department}}{{ department.name }}{{else}}<span
+                class="text-slate-400"
+              >—</span>{{/if}}
+            </td>
+            <td>
+              {{#if position}}{{ position.title }}{{else}}<span
+                class="text-slate-400"
+              >—</span>{{/if}}
+            </td>
+            <td>
+              {{badge employmentStatus}}{{#unless isActive}} {{badge "inactive"}}{{/unless}}
+            </td>
+            <td class="whitespace-nowrap">{{fmtDate hireDate}}</td>
+            <td class="text-right whitespace-nowrap">
+              <a class="btn-ghost btn-sm" href="/hrm/employees/{{ id }}"
+              >View</a>
+              <a class="btn-ghost btn-sm" href="/hrm/employees/{{ id }}/edit"
+              >Edit</a>
+              {{#if isActive}}
+                <form
+                  class="inline"
+                  method="POST"
+                  action="/hrm/employees/{{ id }}/deactivate"
+                  data-title="Deactivate employee"
+                  data-btn="Deactivate"
+                  data-confirm="Deactivate {{ fullName }}? Their attendance and leave history are kept, and active project assignments will be ended."
+                >
+                  {{> hrm-csrf}}<button class="btn-danger btn-sm"
+                  >Deactivate</button>
+                </form>
+              {{else}}
+                <form
+                  class="inline"
+                  method="POST"
+                  action="/hrm/employees/{{ id }}/reactivate"
+                >
+                  {{> hrm-csrf}}<button class="btn-ghost btn-sm"
+                  >Reactivate</button>
+                </form>
+              {{/if}}
+            </td>
+          </tr>
+        {{else}}
+          <tr>
+            <td class="text-center text-slate-400 py-10" colspan="7">
+              No employees match your filters.
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  <div
+    class="
+      flex
+      items-center
+      justify-between
+      px-4
+      py-3
+      border-t
+      border-slate-100
+      text-sm
+    "
+  >
+    <span class="text-slate-500">Page {{ page }} of {{ pages }}</span>
+    <div class="flex gap-2">
+      {{#if prev}}<a class="btn-ghost btn-sm" href="?{{ qs }}&page={{ prev }}"
+      >← Prev</a>{{/if}}{{#if next}}<a
+        class="btn-ghost btn-sm"
+        href="?{{ qs }}&page={{ next }}"
+      >Next →</a>{{/if}}
+    </div>
+  </div>
+</div>
+{{> hrm-close}}

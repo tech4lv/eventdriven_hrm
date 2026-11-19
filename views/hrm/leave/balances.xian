@@ -1,0 +1,135 @@
+{{> hrm-open}}
+<form
+  class="card p-4 mb-4 grid sm:grid-cols-2 lg:grid-cols-5 gap-3"
+  method="GET"
+>
+  <input
+    class="inp"
+    type="number"
+    name="year"
+    value="{{ year }}"
+    min="2020"
+    max="2100"
+    data-autosubmit
+  />
+  {{#if isHR}}
+    <input
+      class="inp"
+      name="q"
+      value="{{ q }}"
+      placeholder="Search employee…"
+    />
+    <select class="inp" name="departmentId" data-autosubmit>
+      <option value="">All departments</option>
+      {{#each departments}}
+        <option
+          value="{{ id }}"
+          {{sel id ../departmentId}}
+        >
+          {{ name }}
+        </option>
+      {{/each}}
+    </select>
+  {{/if}}
+  <select class="inp" name="leaveTypeId" data-autosubmit>
+    <option value="">All leave types</option>
+    {{#each types}}
+      <option
+        value="{{ id }}"
+        {{sel id ../leaveTypeId}}
+      >
+        {{ name }}
+      </option>
+    {{/each}}
+  </select>
+  {{#if isHR}}<button class="btn-ghost">Search</button>{{/if}}
+</form>
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th>Leave type</th>
+          <th>Entitled</th>
+          <th>Used</th>
+          <th>Remaining</th>
+          {{#if isHR}}
+            <th class="text-right"></th>
+          {{/if}}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+          <tr>
+            <td>
+              <div class="font-semibold">{{ employee.fullName }}</div>
+              <div class="text-xs text-slate-400">
+                {{#if employee.department}}{{ employee.department.name }}{{/if}}
+              </div>
+            </td>
+            <td>{{ leaveType.name }}</td>
+            <td>{{num entitled}}</td>
+            <td>{{num used}}</td>
+            <td>
+              <span
+                class="
+                  font-bold
+                  {{#if (eq remaining 0)}}
+                    text-red-600
+                  {{else}}
+                    text-emerald-600
+                  {{/if}}
+                "
+              >{{num remaining}}</span>
+            </td>
+            {{#if @root.isHR}}
+              <td class="text-right">
+                <button
+                  class="btn-ghost btn-sm"
+                  data-modal="balModal"
+                  data-action="/hrm/leave/balances/{{ id }}"
+                  data-heading="Entitlement — {{ employee.fullName }} · {{ leaveType.name }}"
+                  data-record="{{json this}}"
+                >Adjust</button>
+              </td>
+            {{/if}}
+          </tr>
+        {{else}}
+          <tr>
+            <td class="text-center text-slate-400 py-10" colspan="6">
+              No balances for {{ year }}.
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div
+  id="balModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4"
+>
+  <div class="card w-full max-w-sm p-6">
+    <h3 class="font-bold mb-3" data-title>Adjust entitlement</h3>
+    <form class="space-y-3" method="POST" action="#">
+      {{> hrm-csrf}}
+      <div>
+        <label class="lbl">Entitled days</label>
+        <input
+          class="inp"
+          type="number"
+          step="0.5"
+          min="0"
+          name="entitled"
+          required
+        />
+      </div>
+      <div class="flex justify-end gap-2">
+        <button class="btn-ghost" type="button" data-close
+        >Cancel</button><button class="btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{{> hrm-close}}

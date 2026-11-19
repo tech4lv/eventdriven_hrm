@@ -1,0 +1,9 @@
+<footer class="pt-8 pb-10 text-center text-slate-400 text-sm">
+  <div>
+    <span>© 2026 XianFire Framework — Built with</span>
+    <span class="mx-1 text-red-400">❤</span>
+    <span>at Mindoro State University</span>
+  </div>
+</footer>
+</body>
+</html>

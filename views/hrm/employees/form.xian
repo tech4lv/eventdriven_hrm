@@ -1,0 +1,301 @@
+{{> hrm-open}}
+<form
+  class="max-w-4xl space-y-4"
+  method="POST"
+  action="{{#if isEdit}}/hrm/employees/{{ employee.id }}{{else}}/hrm/employees{{/if}}"
+>
+  {{> hrm-csrf}}
+  {{#if isEdit}}
+    <div class="text-sm text-slate-500">
+      Employee ID:
+      <span class="font-mono font-semibold text-slate-800"
+      >{{ employee.employeeNo }}</span>
+    </div>
+  {{else}}
+    <div class="text-sm text-slate-500">
+      An employee ID (RB-YYYY-####) is generated automatically when you save.
+    </div>
+  {{/if}}
+
+  <section class="card p-5">
+    <h2 class="font-bold mb-4">Personal information</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div>
+        <label class="lbl">First name *</label>
+        <input
+          class="inp"
+          name="firstName"
+          value="{{ employee.firstName }}"
+          required
+        />
+      </div>
+      <div>
+        <label class="lbl">Middle name</label>
+        <input
+          class="inp"
+          name="middleName"
+          value="{{ employee.middleName }}"
+        />
+      </div>
+      <div>
+        <label class="lbl">Last name *</label>
+        <input
+          class="inp"
+          name="lastName"
+          value="{{ employee.lastName }}"
+          required
+        />
+      </div>
+      <div>
+        <label class="lbl">Suffix</label>
+        <input
+          class="inp"
+          name="suffix"
+          value="{{ employee.suffix }}"
+          placeholder="Jr., III"
+        />
+      </div>
+      <div>
+        <label class="lbl">Birth date</label>
+        <input
+          class="inp"
+          type="date"
+          name="birthDate"
+          value="{{ employee.birthDate }}"
+        />
+      </div>
+      <div>
+        <label class="lbl">Sex</label>
+        <select class="inp" name="sex">
+          <option value="">—</option>
+          <option
+            value="male"
+            {{sel employee.sex "male"}}
+          >
+            Male
+          </option>
+          <option
+            value="female"
+            {{sel employee.sex "female"}}
+          >
+            Female
+          </option>
+        </select>
+      </div>
+      <div>
+        <label class="lbl">Civil status</label>
+        <select class="inp" name="civilStatus">
+          <option value="">—</option>
+          <option
+            value="single"
+            {{sel employee.civilStatus "single"}}
+          >
+            Single
+          </option>
+          <option
+            value="married"
+            {{sel employee.civilStatus "married"}}
+          >
+            Married
+          </option>
+          <option
+            value="widowed"
+            {{sel employee.civilStatus "widowed"}}
+          >
+            Widowed
+          </option>
+          <option
+            value="separated"
+            {{sel employee.civilStatus "separated"}}
+          >
+            Separated
+          </option>
+        </select>
+      </div>
+    </div>
+  </section>
+
+  <section class="card p-5">
+    <h2 class="font-bold mb-4">Contact &amp; emergency</h2>
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="lbl">Mobile number</label>
+        <input class="inp" name="phone" value="{{ employee.phone }}" />
+      </div>
+      <div>
+        <label class="lbl">Email</label>
+        <input
+          class="inp"
+          type="email"
+          name="email"
+          value="{{ employee.email }}"
+        />
+      </div>
+      <div class="sm:col-span-2">
+        <label class="lbl">Home address</label>
+        <input class="inp" name="address" value="{{ employee.address }}" />
+      </div>
+      <div>
+        <label class="lbl">Emergency contact name</label>
+        <input
+          class="inp"
+          name="emergencyName"
+          value="{{ employee.emergencyName }}"
+        />
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="lbl">Contact number</label>
+          <input
+            class="inp"
+            name="emergencyPhone"
+            value="{{ employee.emergencyPhone }}"
+          />
+        </div>
+        <div>
+          <label class="lbl">Relationship</label>
+          <input
+            class="inp"
+            name="emergencyRelation"
+            value="{{ employee.emergencyRelation }}"
+          />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card p-5">
+    <h2 class="font-bold mb-4">Employment</h2>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div>
+        <label class="lbl">Date hired *</label>
+        <input
+          class="inp"
+          type="date"
+          name="hireDate"
+          value="{{ employee.hireDate }}"
+          required
+        />
+      </div>
+      <div>
+        <label class="lbl">Employment status *</label>
+        <select class="inp" name="employmentStatus">
+          {{#each statuses}}
+            <option
+              value="{{ this }}"
+              {{sel this ../employee.employmentStatus}}
+            >
+              {{ this }}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+      <div>
+        <label class="lbl">Record status</label>
+        <select class="inp" name="isActive">
+          <option
+            value="1"
+            {{#if employee.isActive}}
+              selected
+            {{/if}}
+          >
+            Active
+          </option>
+          <option
+            value="0"
+            {{#unless employee.isActive}}
+              selected
+            {{/unless}}
+          >
+            Inactive
+          </option>
+        </select>
+      </div>
+      <div>
+        <label class="lbl">Department</label>
+        <select id="deptSel" class="inp" name="departmentId">
+          <option value="">— none —</option>
+          {{#each departments}}
+            <option
+              value="{{ id }}"
+              {{sel id ../employee.departmentId}}
+            >
+              {{ name }}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+      <div>
+        <label class="lbl">Position</label>
+        <select id="posSel" class="inp" name="positionId">
+          <option value="">— none —</option>
+          {{#each positions}}
+            <option
+              value="{{ id }}"
+              data-dept="{{ departmentId }}"
+              {{sel id ../employee.positionId}}
+            >
+              {{ title }}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+      <div>
+        <label class="lbl">Supervisor</label>
+        <select class="inp" name="supervisorId">
+          <option value="">— none —</option>
+          {{#each supervisors}}
+            <option
+              value="{{ id }}"
+              {{sel id ../employee.supervisorId}}
+            >
+              {{ fullName }}
+            </option>
+          {{/each}}
+        </select>
+      </div>
+      <div class="lg:col-span-2">
+        <label class="lbl">Linked RektaBuild user account</label>
+        <select class="inp" name="userId">
+          <option value="">— not linked —</option>
+          {{#each users}}
+            <option
+              value="{{ id }}"
+              {{sel id ../employee.userId}}
+            >
+              {{ name }} ({{ email }}) — {{ role }}
+            </option>
+          {{/each}}
+        </select>
+        <p class="text-xs text-slate-400 mt-1">
+          Linking lets the person time in/out and file leave from their own login. HR access is granted by the account's role (admin / hr_staff), not here.
+        </p>
+      </div>
+    </div>
+  </section>
+  <div class="flex gap-2">
+    <button class="btn-primary"
+    >{{#if isEdit}}Save changes{{else}}Register employee{{/if}}</button><a
+      class="btn-ghost"
+      href="{{#if isEdit}}/hrm/employees/{{ employee.id }}{{else}}/hrm/employees{{/if}}"
+    >Cancel</a>
+  </div>
+</form>
+<script>
+  // Show only positions of the chosen department
+  const dep = document.getElementById("deptSel"),
+    pos = document.getElementById("posSel");
+  function filterPositions() {
+    [...pos.options].forEach((o) => {
+      if (!o.value) return;
+      const ok = !dep.value || o.dataset.dept === dep.value;
+      o.hidden = !ok;
+      o.disabled = !ok;
+    });
+    if (pos.selectedOptions[0] && pos.selectedOptions[0].disabled)
+      pos.value = "";
+  }
+  dep.addEventListener("change", filterPositions);
+  filterPositions();
+</script>
+{{> hrm-close}}

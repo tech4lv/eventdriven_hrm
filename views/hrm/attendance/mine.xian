@@ -1,0 +1,60 @@
+{{> hrm-open}}
+{{> hrm-timecard}}
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4 text-center">
+  <div class="card p-3">
+    <div class="text-2xl font-black text-emerald-600">
+      {{ summary.daysPresent }}
+    </div>
+    <div class="text-xs text-slate-500">Present (month)</div>
+  </div>
+  <div class="card p-3">
+    <div class="text-2xl font-black text-amber-600">{{ summary.daysLate }}</div>
+    <div class="text-xs text-slate-500">Late</div>
+  </div>
+  <div class="card p-3">
+    <div class="text-2xl font-black text-red-600">{{ summary.daysAbsent }}</div>
+    <div class="text-xs text-slate-500">Absent</div>
+  </div>
+  <div class="card p-3">
+    <div class="text-2xl font-black text-sky-600">
+      {{ summary.daysOnLeave }}
+    </div>
+    <div class="text-xs text-slate-500">On leave</div>
+  </div>
+</div>
+<div class="card overflow-hidden">
+  <div class="px-5 py-4 font-bold">My attendance history</div>
+  <div class="overflow-x-auto">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Time in</th>
+          <th>Time out</th>
+          <th>Hours</th>
+          <th>Status</th>
+          <th>Remarks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+          <tr>
+            <td>{{fmtDate date}}</td>
+            <td>{{fmtTime timeIn}}</td>
+            <td>{{fmtTime timeOut}}</td>
+            <td>{{ hours }}</td>
+            <td>{{badge status}}</td>
+            <td class="text-slate-500">{{ remarks }}</td>
+          </tr>
+        {{else}}
+          <tr>
+            <td class="text-center text-slate-400 py-8" colspan="6">
+              No attendance records yet.
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>
+{{> hrm-close}}

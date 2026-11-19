@@ -1,0 +1,133 @@
+{{> hrm-open}}
+<div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+  <form class="flex gap-2" method="GET">
+    <input
+      class="inp w-64"
+      name="q"
+      value="{{ q }}"
+      placeholder="Search departments…"
+    />
+    <button class="btn-ghost">Search</button>
+  </form>
+  <button
+    class="btn-primary"
+    data-modal="deptModal"
+    data-action="/hrm/departments"
+    data-heading="Add department"
+  >＋ Add department</button>
+</div>
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Department</th>
+          <th>Code</th>
+          <th>Head</th>
+          <th>Positions</th>
+          <th>Employees</th>
+          <th>Status</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+          <tr>
+            <td>
+              <div class="font-semibold">{{ name }}</div>
+              <div class="text-xs text-slate-400">{{ description }}</div>
+            </td>
+            <td class="font-mono text-xs">{{ code }}</td>
+            <td>{{#if headName}}{{ headName }}{{else}}—{{/if}}</td>
+            <td>
+              <a
+                class="text-amber-700 font-semibold"
+                href="/hrm/positions?departmentId={{ id }}"
+              >{{ positionCount }}</a>
+            </td>
+            <td>
+              <a
+                class="text-amber-700 font-semibold"
+                href="/hrm/employees?departmentId={{ id }}"
+              >{{ employeeCount }}</a>
+            </td>
+            <td>
+              {{#if isActive}}{{badge "active"}}{{else}}{{badge "inactive"}}{{/if}}
+            </td>
+            <td class="text-right whitespace-nowrap">
+              <button
+                class="btn-ghost btn-sm"
+                data-modal="deptModal"
+                data-action="/hrm/departments/{{ id }}"
+                data-heading="Edit department"
+                data-record="{{json this}}"
+              >Edit</button>
+              <form
+                class="inline"
+                method="POST"
+                action="/hrm/departments/{{ id }}/delete"
+                data-title="Delete department"
+                data-btn="Delete"
+                data-confirm="Delete “{{ name }}”? Departments with positions or employees can’t be deleted — set them inactive instead."
+              >
+                {{> hrm-csrf}}<button class="btn-danger btn-sm">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {{else}}
+          <tr>
+            <td class="text-center text-slate-400 py-10" colspan="7">
+              No departments yet.
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div
+  id="deptModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4"
+>
+  <div class="card w-full max-w-md p-6">
+    <h3 class="font-bold text-lg mb-4" data-title>Department</h3>
+    <form class="space-y-3" method="POST" action="/hrm/departments">
+      {{> hrm-csrf}}
+      <div class="grid grid-cols-3 gap-3">
+        <div class="col-span-2">
+          <label class="lbl">Name *</label>
+          <input class="inp" name="name" required />
+        </div>
+        <div>
+          <label class="lbl">Code</label>
+          <input class="inp" name="code" maxlength="20" />
+        </div>
+      </div>
+      <div>
+        <label class="lbl">Description</label>
+        <input class="inp" name="description" />
+      </div>
+      <div>
+        <label class="lbl">Department head</label>
+        <select class="inp" name="headEmployeeId">
+          <option value="">— none —</option>
+          {{#each employees}}
+            <option value="{{ id }}">{{ fullName }}</option>
+          {{/each}}
+        </select>
+      </div>
+      <div>
+        <label class="lbl">Status</label>
+        <select class="inp" name="isActive">
+          <option value="1">Active</option>
+          <option value="0">Inactive</option>
+        </select>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button class="btn-ghost" type="button" data-close
+        >Cancel</button><button class="btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{{> hrm-close}}

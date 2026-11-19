@@ -1,0 +1,214 @@
+{{> head}}
+<body class="bg-[#020d1d] text-slate-100 antialiased">
+  <header class="bg-[#071827] border-b border-[#122338]">
+    <div class="px-8 lg:px-16 xl:px-20 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div
+          class="
+            w-10
+            h-10
+            rounded-lg
+            bg-blue-600
+            text-white
+            font-black
+            grid
+            place-items-center
+            text-[17px]
+          "
+        >
+          RB
+        </div>
+        <div class="leading-none">
+          <div class="text-white font-bold text-[17px] tracking-[-0.03em]">
+            RektaBuild
+          </div>
+          <div
+            class="mt-1 text-[10px] text-blue-300 uppercase tracking-[0.18em]"
+          >
+            Construction Management
+          </div>
+        </div>
+      </div>
+
+      <nav class="flex items-center gap-2 text-sm font-semibold">
+        <a
+          class="px-4 py-2 rounded-lg text-slate-200 hover:text-white"
+          href="/login"
+        >Login</a>
+        <a
+          class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-500"
+          href="/register"
+        >Register</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="bg-[#020d1d]">
+    <section class="px-8 lg:px-16 xl:px-20 pt-10 pb-12">
+      <div class="flex flex-col gap-10">
+        <div class="max-w-[720px] pt-4">
+          <span
+            class="
+              inline-block
+              text-[10px]
+              uppercase
+              tracking-[0.18em]
+              text-blue-300
+              border
+              border-blue-500/40
+              rounded-full
+              px-3
+              py-1
+              bg-[#0a1f35]
+            "
+          >Human Resource Management</span>
+
+          <h1
+            class="mt-6 text-[80px] leading-[0.86] font-black tracking-[-0.07em] text-white"
+          >
+            Build the site.
+            <br />
+            <span class="text-blue-300">We handle the people.</span>
+          </h1>
+
+          <p
+            class="mt-5 text-slate-300 text-[17px] max-w-[620px] leading-relaxed"
+          >
+            Employee records, daily attendance, leave, work schedules and project assignments — all in one place for your construction crew.
+          </p>
+
+          <div class="mt-7 flex flex-wrap gap-3">
+            <a
+              class="
+                px-5
+                py-3
+                rounded-lg
+                bg-blue-600
+                text-white
+                font-bold
+                hover:bg-blue-500
+                text-base
+              "
+              href="/login"
+            >Login</a>
+            <a
+              class="
+                px-5
+                py-3
+                rounded-lg
+                border
+                border-slate-600
+                text-white
+                font-semibold
+                hover:bg-slate-800
+                text-base
+              "
+              href="/hrm"
+            >Open HRM &rarr;</a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="px-8 lg:px-16 xl:px-20 pb-20">
+      <div class="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div
+          class="
+            bg-[#0b1b2d]
+            rounded-xl
+            border
+            border-[#1c2e45]
+            shadow-sm
+            p-5
+            min-h-[160px]
+          "
+        >
+          <div class="text-[52px] font-black text-blue-300 leading-none">
+            01
+          </div>
+          <h3 class="mt-4 text-[28px] font-bold text-white leading-none">
+            Employees
+          </h3>
+          <p class="mt-4 text-[16px] text-slate-400 leading-relaxed">
+            Profiles, documents, departments and positions.
+          </p>
+        </div>
+
+        <div
+          class="
+            bg-[#0b1b2d]
+            rounded-xl
+            border
+            border-[#1c2e45]
+            shadow-sm
+            p-5
+            min-h-[160px]
+          "
+        >
+          <div class="text-[52px] font-black text-blue-300 leading-none">
+            02
+          </div>
+          <h3 class="mt-4 text-[28px] font-bold text-white leading-none">
+            Attendance
+          </h3>
+          <p class="mt-4 text-[16px] text-slate-400 leading-relaxed">
+            Time in/out, late tracking and a monthly calendar.
+          </p>
+        </div>
+
+        <div
+          class="
+            bg-[#0b1b2d]
+            rounded-xl
+            border
+            border-[#1c2e45]
+            shadow-sm
+            p-5
+            min-h-[160px]
+          "
+        >
+          <div class="text-[52px] font-black text-blue-300 leading-none">
+            03
+          </div>
+          <h3 class="mt-4 text-[28px] font-bold text-white leading-none">
+            Leave
+          </h3>
+          <p class="mt-4 text-[16px] text-slate-400 leading-relaxed">
+            Apply, approve and track leave balances.
+          </p>
+        </div>
+
+        <div
+          class="
+            bg-[#0b1b2d]
+            rounded-xl
+            border
+            border-[#1c2e45]
+            shadow-sm
+            p-5
+            min-h-[160px]
+          "
+        >
+          <div class="text-[52px] font-black text-blue-300 leading-none">
+            04
+          </div>
+          <h3 class="mt-4 text-[28px] font-bold text-white leading-none">
+            Projects
+          </h3>
+          <p class="mt-4 text-[16px] text-slate-400 leading-relaxed">
+            Assign crews to sites and manage work schedules.
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-[#020d1d] py-8">
+    <div class="text-center text-slate-400 text-sm">
+      <span>© 2026 XianFire Framework — Built with</span>
+      <span class="mx-1 text-red-400">❤</span>
+      <span>at Mindoro State University</span>
+    </div>
+  </footer>
+</body>

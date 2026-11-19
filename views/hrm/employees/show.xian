@@ -1,0 +1,355 @@
+{{> hrm-open}}
+<div class="card p-5 mb-4 flex flex-wrap items-center gap-4">
+  <div
+    class="
+      w-16
+      h-16
+      rounded-full
+      bg-slate-800
+      text-amber-400
+      text-xl
+      font-bold
+      grid
+      place-items-center
+    "
+  >
+    {{initials employee.firstName employee.lastName}}
+  </div>
+  <div class="flex-1 min-w-[12rem]">
+    <h2 class="text-xl font-bold">{{ employee.fullName }}</h2>
+    <div class="text-sm text-slate-500">
+      {{#if employee.position}}{{ employee.position.title }}{{else}}No position{{/if}}
+      ·
+      {{#if employee.department}}{{ employee.department.name }}{{else}}No department{{/if}}
+    </div>
+    <div class="mt-1 flex gap-2 items-center">
+      <span class="font-mono text-xs bg-slate-100 rounded px-2 py-0.5"
+      >{{ employee.employeeNo }}</span>{{badge employee.employmentStatus}}{{#if employee.resignationStatus}}{{badge employee.resignationStatus}}{{/if}}{{#unless employee.isActive}}{{badge "inactive"}}{{/unless}}
+    </div>
+  </div>
+  {{#if isHR}}
+    <div class="flex gap-2">
+      <a class="btn-primary" href="/hrm/employees/{{ employee.id }}/edit"
+      >Edit</a><a
+        class="btn-ghost"
+        href="/hrm/attendance/calendar?employeeId={{ employee.id }}"
+      >Attendance</a>
+    </div>
+  {{/if}}
+</div>
+
+<div class="grid lg:grid-cols-3 gap-4">
+  <div class="lg:col-span-2 space-y-4">
+    <section class="card p-5">
+      <h3 class="font-bold mb-3">Personal &amp; contact</h3>
+      <dl class="grid sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+        <div>
+          <dt class="text-xs text-slate-400">Birth date</dt>
+          <dd>{{fmtDate employee.birthDate}}</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-400">Sex / Civil status</dt>
+          <dd>
+            {{#if employee.sex}}{{ employee.sex }}{{else}}—{{/if}} /
+            {{#if employee.civilStatus}}{{ employee.civilStatus }}{{else}}—{{/if}}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-400">Mobile</dt>
+          <dd>{{#if employee.phone}}{{ employee.phone }}{{else}}—{{/if}}</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-400">Email</dt>
+          <dd>{{#if employee.email}}{{ employee.email }}{{else}}—{{/if}}</dd>
+        </div>
+        <div class="sm:col-span-2">
+          <dt class="text-xs text-slate-400">Address</dt>
+          <dd>
+            {{#if employee.address}}{{ employee.address }}{{else}}—{{/if}}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-400">Emergency contact</dt>
+          <dd>
+            {{#if employee.emergencyName}}{{ employee.emergencyName }} ({{ employee.emergencyRelation }}){{else}}—{{/if}}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-400">Emergency number</dt>
+          <dd>
+            {{#if employee.emergencyPhone}}{{ employee.emergencyPhone }}{{else}}—{{/if}}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-400">Date hired</dt>
+          <dd>{{fmtDate employee.hireDate}}</dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-400">Supervisor</dt>
+          <dd>
+            {{#if employee.supervisor}}{{ employee.supervisor.fullName }}{{else}}—{{/if}}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-400">Linked account</dt>
+          <dd>
+            {{#if employee.user}}{{ employee.user.email }}{{else}}Not linked{{/if}}
+          </dd>
+        </div>
+        <div>
+          <dt class="text-xs text-slate-400">Shift</dt>
+          <dd>
+            {{fmtTime schedule.shiftStart}} – {{fmtTime schedule.shiftEnd}}
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section id="documents" class="card p-5">
+      <h3 class="font-bold mb-3">Documents</h3>
+      <div class="overflow-x-auto">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Type</th>
+              <th>Uploaded</th>
+              <th class="text-right"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each docs}}
+              <tr>
+                <td>
+                  {{ title }}
+                  <div class="text-xs text-slate-400">{{ originalName }}</div>
+                </td>
+                <td>{{ docType }}</td>
+                <td>{{fmtDate createdAt}}</td>
+                <td class="text-right whitespace-nowrap">
+                  <a
+                    class="btn-ghost btn-sm"
+                    href="/hrm/documents/{{ id }}/download"
+                  >Download</a>
+                  {{#if @root.isHR}}
+                    <form
+                      class="inline"
+                      method="POST"
+                      action="/hrm/documents/{{ id }}/delete"
+                      data-title="Delete document"
+                      data-btn="Delete"
+                      data-confirm="Remove “{{ title }}” permanently?"
+                    >
+                      {{> hrm-csrf}}<button class="btn-danger btn-sm"
+                      >Delete</button>
+                    </form>
+                  {{/if}}
+                </td>
+              </tr>
+            {{else}}
+              <tr>
+                <td class="text-center text-slate-400 py-6" colspan="4">
+                  No documents uploaded.
+                </td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{#if isHR}}
+        <form
+          class="mt-4 grid sm:grid-cols-4 gap-2 items-end"
+          method="POST"
+          enctype="multipart/form-data"
+          action="/hrm/employees/{{ employee.id }}/documents?_csrf={{ csrf }}"
+        >
+          <div>
+            <label class="lbl">Type</label>
+            <select class="inp" name="docType">
+              <option>Government ID</option>
+              <option>Resume</option>
+              <option>Contract</option>
+              <option>Medical</option>
+              <option>Certificate</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="lbl">Title</label>
+            <input class="inp" name="title" placeholder="e.g. NBI Clearance" />
+          </div>
+          <div>
+            <label class="lbl">File (PDF/JPG/PNG/DOC, max 5MB)</label>
+            <input class="inp !p-1.5" type="file" name="file" required />
+          </div>
+          <button class="btn-primary">Upload</button>
+        </form>
+      {{/if}}
+    </section>
+
+    <section class="card p-5">
+      <h3 class="font-bold mb-3">Recent attendance</h3>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>In</th>
+            <th>Out</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each recent}}
+            <tr>
+              <td>{{fmtDate date}}</td>
+              <td>{{fmtTime timeIn}}</td>
+              <td>{{fmtTime timeOut}}</td>
+              <td>{{badge status}}</td>
+            </tr>
+          {{else}}
+            <tr>
+              <td class="text-center text-slate-400 py-6" colspan="4">
+                No attendance yet.
+              </td>
+            </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <div class="space-y-4">
+    <section class="card p-5">
+      <h3 class="font-bold mb-3">This month</h3>
+      <div class="grid grid-cols-2 gap-3 text-center">
+        <div class="rounded-lg bg-emerald-50 p-3">
+          <div class="text-2xl font-black text-emerald-600">
+            {{ summary.daysPresent }}
+          </div>
+          <div class="text-xs text-slate-500">Present</div>
+        </div>
+        <div class="rounded-lg bg-amber-50 p-3">
+          <div class="text-2xl font-black text-amber-600">
+            {{ summary.daysLate }}
+          </div>
+          <div class="text-xs text-slate-500">Late</div>
+        </div>
+        <div class="rounded-lg bg-red-50 p-3">
+          <div class="text-2xl font-black text-red-600">
+            {{ summary.daysAbsent }}
+          </div>
+          <div class="text-xs text-slate-500">Absent</div>
+        </div>
+        <div class="rounded-lg bg-sky-50 p-3">
+          <div class="text-2xl font-black text-sky-600">
+            {{ summary.daysOnLeave }}
+          </div>
+          <div class="text-xs text-slate-500">On leave</div>
+        </div>
+      </div>
+    </section>
+    <section class="card p-5">
+      <h3 class="font-bold mb-3">Leave balance {{ year }}</h3>
+      {{#each balances}}
+        <div
+          class="
+            flex
+            justify-between
+            text-sm
+            py-1.5
+            border-b
+            border-slate-100
+            last:border-0
+          "
+        >
+          <span>{{ leaveType.name }}</span><span class="font-semibold"
+          >{{num remaining}}
+            <span class="text-slate-400 font-normal">/ {{num entitled}}</span></span>
+        </div>
+      {{else}}
+        <p class="text-sm text-slate-400">No balances.</p>
+      {{/each}}
+    </section>
+    <section class="card p-5">
+      <h3 class="font-bold mb-3">Project assignments</h3>
+      {{#each assignments}}
+        <div class="py-2 border-b border-slate-100 last:border-0 text-sm">
+          <div class="font-semibold">{{ projectName }}</div>
+          <div class="text-xs text-slate-500">
+            {{ siteName }} · {{fmtDate startDate}} →
+            {{#if endDate}}{{fmtDate endDate}}{{else}}ongoing{{/if}}
+            {{badge status}}
+          </div>
+        </div>
+      {{else}}
+        <p class="text-sm text-slate-400">No assignments.</p>
+      {{/each}}
+    </section>
+    {{#if isSelf}}
+      <section id="resignation" class="card p-5">
+        <h3 class="font-bold mb-3">Resignation</h3>
+        {{#if employee.resignationStatus}}
+          <div class="text-sm space-y-1.5">
+            <div>
+              Status:
+              {{badge employee.resignationStatus}}
+            </div>
+            {{#if employee.resignationDate}}<div>
+                Last working day:
+                <span class="font-semibold"
+                >{{ fmtDate employee.resignationDate }}</span>
+              </div>{{/if}}
+            {{#if employee.resignationReason}}<div class="text-slate-500">
+                {{ employee.resignationReason }}
+              </div>{{/if}}
+            {{#if employee.resignationReviewRemarks}}<div class="text-xs text-slate-400">
+                Admin note: {{ employee.resignationReviewRemarks }}
+              </div>{{/if}}
+          </div>
+          {{#if (eq employee.resignationStatus "pending")}}
+            <form
+              class="mt-3"
+              method="POST"
+              action="/hrm/employees/{{ employee.id }}/resignation/cancel"
+              data-title="Withdraw resignation"
+              data-btn="Withdraw"
+              data-confirm="Withdraw your resignation request?"
+            >
+              {{> hrm-csrf}}<button class="btn-ghost btn-sm"
+              >Withdraw request</button>
+            </form>
+          {{/if}}
+        {{else}}
+          <form class="space-y-3" method="POST" action="/hrm/employees/{{ employee.id }}/resignation">
+            {{> hrm-csrf}}
+            <div>
+              <label class="lbl">Last working day *</label>
+              <input
+                class="inp"
+                type="date"
+                name="lastDay"
+                min="{{ today }}"
+                required
+              />
+            </div>
+            <div>
+              <label class="lbl">Reason *</label>
+              <textarea
+                class="inp"
+                name="reason"
+                rows="3"
+                maxlength="500"
+                placeholder="Why are you resigning?"
+                required
+              ></textarea>
+            </div>
+            <button class="btn-danger btn-sm">
+              Submit resignation
+            </button>
+          </form>
+        {{/if}}
+      </section>
+    {{/if}}
+  </div>
+</div>
+{{> hrm-close}}

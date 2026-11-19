@@ -1,0 +1,61 @@
+{{> hrm-open}}
+<div class="mb-4">
+  <p class="text-sm text-slate-500">
+    Login accounts and their HRM access level.
+    <span class="font-semibold">admin</span> and
+    <span class="font-semibold">hr_staff</span> get full HRM access;
+    <span class="font-semibold">employee</span>
+    gets self-service only (and needs a linked active employee record).
+  </p>
+</div>
+<div class="card overflow-hidden">
+  <table class="tbl">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Role</th>
+        <th>Linked employee</th>
+        <th class="text-right">Change role</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each users}}
+        <tr>
+          <td>
+            <div class="font-semibold">
+              {{ name }}{{#if (eq id @root.me.id)}} <span
+                class="text-xs text-slate-400"
+              >(you)</span>{{/if}}
+            </div>
+            <div class="text-xs text-slate-400">{{ email }}</div>
+          </td>
+          <td>{{badge role}}</td>
+          <td>
+            {{#each employees}}{{ firstName }} {{ lastName }}{{#if employeeNo}} ({{ employeeNo }}){{/if}}{{#unless @last}}, {{/unless}}{{/each}}{{#unless employees}}—{{/unless}}
+          </td>
+          <td class="text-right">
+            <form
+              class="inline-flex items-center gap-2 justify-end"
+              method="POST"
+              action="/hrm/users/{{ id }}/role"
+            >
+              {{> hrm-csrf}}
+              <select class="inp !w-36 !py-1.5 text-xs" name="role">
+                {{#each ../roles}}
+                  <option
+                    value="{{ this }}"
+                    {{sel this ../role}}
+                  >
+                    {{statusLabel this}}
+                  </option>
+                {{/each}}
+              </select>
+              <button class="btn-ghost btn-sm">Save</button>
+            </form>
+          </td>
+        </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+{{> hrm-close}}

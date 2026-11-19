@@ -1,0 +1,140 @@
+{{> hrm-open}}
+<form
+  class="card p-4 mb-4 grid sm:grid-cols-2 lg:grid-cols-6 gap-3 print:hidden"
+  method="GET"
+>
+  <div class="lg:col-span-2">
+    <label class="lbl">Report</label>
+    <select class="inp" name="type" data-autosubmit>
+      {{#each types}}
+        <option
+          value="{{ key }}"
+          {{sel key ../type}}
+        >
+          {{ name }}
+        </option>
+      {{/each}}
+    </select>
+  </div>
+  {{#if usesDates}}
+    <div>
+      <label class="lbl">From</label>
+      <input class="inp" type="date" name="from" value="{{ from }}" />
+    </div>
+    <div>
+      <label class="lbl">To</label>
+      <input class="inp" type="date" name="to" value="{{ to }}" />
+    </div>
+  {{/if}}
+  <div>
+    <label class="lbl">Department</label>
+    <select class="inp" name="departmentId">
+      <option value="">All</option>
+      {{#each departments}}
+        <option
+          value="{{ id }}"
+          {{sel id ../departmentId}}
+        >
+          {{ name }}
+        </option>
+      {{/each}}
+    </select>
+  </div>
+  <div>
+    <label class="lbl">Employee</label>
+    <select class="inp" name="employeeId">
+      <option value="">All</option>
+      {{#each employees}}
+        <option
+          value="{{ id }}"
+          {{sel id ../employeeId}}
+        >
+          {{ fullName }}
+        </option>
+      {{/each}}
+    </select>
+  </div>
+  {{#if showStatus}}
+    <div>
+      <label class="lbl">Status</label>
+      <input
+        class="inp"
+        name="status"
+        value="{{ status }}"
+        placeholder="e.g. regular, approved, late, active"
+      />
+    </div>
+  {{/if}}
+  <div class="flex items-end gap-2 lg:col-span-6">
+    <button class="btn-primary">Generate</button><a
+      class="btn-ghost"
+      href="/hrm/reports?{{ qs }}&format=csv"
+    >⬇ Export CSV</a><button
+      class="btn-ghost"
+      type="button"
+      onclick="window.print()"
+    >🖨 Print</button>
+  </div>
+</form>
+<div class="card overflow-hidden">
+  <div class="px-5 py-4 border-b border-slate-100">
+    <h2 class="font-bold text-lg">{{ typeName }}</h2>
+    <p class="text-xs text-slate-400">
+      {{#if usesDates}}{{fmtDate from}} – {{fmtDate to}} · {{/if}}{{ totalRows }}
+      row(s) · Generated {{ generated }}
+    </p>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="tbl">
+      <thead>
+        <tr>
+          {{#each columns}}
+            <th>{{ this }}</th>
+          {{/each}}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+          <tr>
+            {{#each this}}
+              <td>{{ this }}</td>
+            {{/each}}
+          </tr>
+        {{else}}
+          <tr>
+            <td class="text-center text-slate-400 py-10" colspan="12">
+              No data for the selected filters.
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+  {{#if showPager}}
+    <div
+      class="
+        px-5
+        py-3
+        border-t
+        border-slate-100
+        flex
+        items-center
+        justify-between
+        text-sm
+      "
+    >
+      <span class="text-slate-500">Page {{ page }} of {{ pages }}</span>
+      <div class="flex gap-2">
+        {{#if hasPrev}}<a
+          class="btn-ghost btn-sm"
+          href="/hrm/reports?{{ qs }}&page={{ prevPage }}"
+        >← Prev</a>{{/if}}
+        {{#if hasNext}}<a
+          class="btn-ghost btn-sm"
+          href="/hrm/reports?{{ qs }}&page={{ nextPage }}"
+        >Next →</a>{{/if}}
+      </div>
+    </div>
+  {{/if}}
+</div>
+{{> hrm-close}}

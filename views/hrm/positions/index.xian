@@ -1,0 +1,124 @@
+{{> hrm-open}}
+<div class="flex flex-wrap justify-between items-center gap-3 mb-4">
+  <form class="flex gap-2 flex-wrap" method="GET">
+    <input
+      class="inp w-56"
+      name="q"
+      value="{{ q }}"
+      placeholder="Search positions…"
+    />
+    <select class="inp w-56" name="departmentId" data-autosubmit>
+      <option value="">All departments</option>
+      {{#each departments}}
+        <option
+          value="{{ id }}"
+          {{sel id ../departmentId}}
+        >
+          {{ name }}
+        </option>
+      {{/each}}
+    </select>
+    <button class="btn-ghost">Search</button>
+  </form>
+  <button
+    class="btn-primary"
+    data-modal="posModal"
+    data-action="/hrm/positions"
+    data-heading="Add position"
+  >＋ Add position</button>
+</div>
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Position</th>
+          <th>Department</th>
+          <th>Employees</th>
+          <th>Status</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each rows}}
+          <tr>
+            <td>
+              <div class="font-semibold">{{ title }}</div>
+              <div class="text-xs text-slate-400">{{ description }}</div>
+            </td>
+            <td>{{ department.name }}</td>
+            <td>{{ employeeCount }}</td>
+            <td>
+              {{#if isActive}}{{badge "active"}}{{else}}{{badge "inactive"}}{{/if}}
+            </td>
+            <td class="text-right whitespace-nowrap">
+              <button
+                class="btn-ghost btn-sm"
+                data-modal="posModal"
+                data-action="/hrm/positions/{{ id }}"
+                data-heading="Edit position"
+                data-record="{{json this}}"
+              >Edit</button>
+              <form
+                class="inline"
+                method="POST"
+                action="/hrm/positions/{{ id }}/delete"
+                data-title="Delete position"
+                data-btn="Delete"
+                data-confirm="Delete “{{ title }}”? Positions held by employees can’t be deleted — set them inactive instead."
+              >
+                {{> hrm-csrf}}<button class="btn-danger btn-sm">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {{else}}
+          <tr>
+            <td class="text-center text-slate-400 py-10" colspan="5">
+              No positions found.
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div
+  id="posModal"
+  class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4"
+>
+  <div class="card w-full max-w-md p-6">
+    <h3 class="font-bold text-lg mb-4" data-title>Position</h3>
+    <form class="space-y-3" method="POST" action="/hrm/positions">
+      {{> hrm-csrf}}
+      <div>
+        <label class="lbl">Title *</label>
+        <input class="inp" name="title" required />
+      </div>
+      <div>
+        <label class="lbl">Department *</label>
+        <select class="inp" name="departmentId" required>
+          <option value="">Select…</option>
+          {{#each departments}}
+            <option value="{{ id }}">{{ name }}</option>
+          {{/each}}
+        </select>
+      </div>
+      <div>
+        <label class="lbl">Description</label>
+        <input class="inp" name="description" />
+      </div>
+      <div>
+        <label class="lbl">Status</label>
+        <select class="inp" name="isActive">
+          <option value="1">Active</option>
+          <option value="0">Inactive</option>
+        </select>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button class="btn-ghost" type="button" data-close
+        >Cancel</button><button class="btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+{{> hrm-close}}
