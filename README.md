@@ -1,251 +1,145 @@
-# Rekta-HRM
+# RektaBuild HRMS — Human Resource Management System
 
-An HRM (Human Resource Management) module for the XianFire framework — built with Express, Sequelize (MySQL), and Handlebars (`.xian` templates). It provides a full server-rendered HR interface for managing employees, attendance, leave, scheduling, and project assignments.
+A web-based HR system for RektaBuild. It keeps employee records, departments and positions, daily attendance, leave requests, work schedules and project assignments in one place, with separate access for administrators, HR staff and employees.
+
+Built on the XianFire Framework (Node.js and Express) with MySQL, Sequelize and server-rendered `.xian` (Handlebars) views styled with Tailwind CSS.
 
 ## Features
 
-### Core HR
+| Module | What it does |
+|---|---|
+| Dashboard | Company overview for admin and staff: headcount, attendance, pending leave requests and other HR summaries. Employees get a personal dashboard instead. |
+| Employees | Add, view, edit, deactivate and reactivate employee records with generated employee numbers. Upload and manage employee documents. Employees can submit resignation requests; admins approve or reject them. |
+| Self-service | Employees view their own profile, change their password, clock in and out, file leave and track balances — no HR access needed. |
+| Departments & Positions | Create departments, set a department head, manage positions. A department or position with employees cannot be deleted. |
+| Attendance | Employees check in and out themselves; time-in after the shift start plus a grace period is marked Late with the minutes counted. HR records or corrects attendance for any date and can bulk-generate absences. |
+| Leave Management | Employees file leave; admin or staff approve or reject it. Leave balances per type are tracked per calendar year and enforced on filing and on approval. Rest days are not counted. |
+| Schedules & Assignments | Per-employee work schedules with effective date ranges, and project assignments tracking who works on which project, site and role. |
+| Reports | Printable employee, department, attendance, leave and assignment reports for a date range. |
+| User Accounts | Admin changes user roles and links accounts to employee records. Public registration always creates an unlinked employee account. |
 
-- **Employee records** — full profiles (name, employee no., department, position, hire date, status), activate/deactivate, document uploads, resignation submission
-- **Resignations** — employees submit resignation requests; admins approve or reject them
-- **User accounts & roles** — admins can manage user roles (`admin`, `hr_staff`, employee)
-- **Self-service portal** — employees view their own profile, change password, clock in/out, apply for leave, and upload documents
+Lists are paginated, deletes and final actions ask for confirmation, and the interface is styled with Tailwind CSS.
 
-### Organization
-
-- **Departments & positions** — CRUD with active/inactive flags and headcount tracking
-- **Work schedules** — per-employee schedules with effective date ranges
-- **Project assignments** — track which employees are assigned to which projects over time
-
-### Time & Attendance
-
-- **Time-in / time-out** clocking with attendance records
-- **Calendar view** of attendance
-- **HR-managed attendance** — manual save, bulk absence generation, record deletion
-- **Attendance audit trail** (`hrm_attendance_audit`)
-
-### Leave Management
-
-- **Leave types** — configurable (paid/unpaid), managed by HR
-- **Leave balances** — per-employee, per-year entitlements; auto-provisioned via `ensureBalances`
-- **Leave requests** — apply, approve/reject (HR), cancel (employee)
-- **Leave audit trail** (`hrm_leave_audit`)
-
-### Reports & Dashboard
-
-- HR dashboard with summary stats
-- Reports module (`/hrm/reports`)
-
-## Roles & Access Control
+## Roles
 
 | Role | Access |
 |---|---|
-| `admin` | Everything, including resignations and user management |
-| `hr_staff` | HR functions: employees, attendance management, leave approvals, org structure, assignments, reports |
-| employee | Self-service only: own profile, attendance clocking, leave applications |
+| Admin | Everything, including user accounts, resignations and deleting records |
+| Staff (HR) | Employees, departments and positions, attendance, leave approval, schedules, assignments, reports |
+| Employee | Own profile, own attendance (check in / out), filing leave, own documents and resignation requests |
 
-Middleware enforces this via `requireHR` / `requireAdmin` in `middleware/hrmAuth.js`. All state-changing routes are protected by CSRF checks.
+Access is checked on the server for every route, so typing a URL directly shows Access Denied for a page the role may not open. Public registration always creates an `employee` account that is not linked to any employee record; only an administrator assigns roles.
 
-## Data Model
+## Business rules
 
-All HRM tables are prefixed `hrm_` so they never collide with tables owned by other RektaBuild modules (Supply, Accounting, Inventory, Payroll). The only shared table referenced is `Users` (authentication).
-
-### `hrm_departments`
-
-| Column | Type | Notes |
-|---|---|---|
-| `name` | VARCHAR(100) | Unique, required |
-| `code` | VARCHAR(20) | Unique, optional |
-| `description` | TEXT | Optional |
-| `headEmployeeId` | INT | Soft reference to department head (avoids circular FK) |
-| `isActive` | BOOLEAN | Default `true` |
-
-### `hrm_positions`
-
-| Column | Type | Notes |
-|---|---|---|
-| `title` | VARCHAR(100) | Required |
-| `description` | TEXT | Optional |
-| `departmentId` | INT | FK → `hrm_departments` (RESTRICT) |
-| `isActive` | BOOLEAN | Default `true` |
-
-Unique index on `(title, departmentId)`.
-
-### `hrm_employees`
-
-| Column | Type | Notes |
-|---|---|---|
-| `employeeNo` | VARCHAR(20) | Unique employee number |
-| `userId` | INT | Optional FK → `Users` (login account) |
-| `firstName` / `middleName` / `lastName` / `suffix` | VARCHAR | Name parts (`fullName` is a virtual field) |
-| `birthDate` | DATE | Optional |
-| `sex` | ENUM | `male` / `female` |
-| `civilStatus` | ENUM | `single` / `married` / `widowed` / `separated` |
-| `phone` / `email` / `address` | | Contact info |
-| `emergencyName` / `emergencyPhone` / `emergencyRelation` | | Emergency contact |
-| `hireDate` | DATE | Required |
-| `employmentStatus` | ENUM | `probationary`, `regular`, `contractual`, `project-based`, `resigned`, `terminated` |
-| `supervisorId` | INT | Self-FK → supervisor employee (SET NULL) |
-| `departmentId` / `positionId` | INT | FKs to org tables (SET NULL) |
-| `isActive` | BOOLEAN | Default `true` |
-| `resignationDate` / `resignationReason` | | Last working day + reason |
-| `resignationStatus` | ENUM | `pending` / `approved` / `rejected` |
-| `resignationReviewedBy` / `resignationReviewedAt` / `resignationReviewRemarks` | | Admin review fields |
-
-### `hrm_employee_documents`
-
-Uploaded files: `docType`, `title`, `originalName`, `filePath`, `mimeType`, `size`. FK → `hrm_employees`; `uploadedBy` → `Users` (SET NULL).
-
-### `hrm_work_schedules`
-
-Per-employee schedule with `workDays` (comma-separated, 0=Sun–6=Sat), `shiftStart`/`shiftEnd` (TIME), and `effectiveFrom`/`effectiveTo` date range. Indexed on `(employeeId, effectiveFrom)`.
-
-### `hrm_attendance`
-
-One row per employee per day (unique index on `(employeeId, date)`):
-
-| Column | Notes |
+| Rule | Value |
 |---|---|
-| `date` | Work date |
-| `timeIn` / `timeOut` | TIME, nullable |
-| `status` | ENUM: `present`, `late`, `absent`, `on_leave`, `half_day` |
-| `minutesLate` | Computed late minutes |
-| `leaveRequestId` | Soft reference to the leave request that marked this day |
-| `statusBeforeLeave` / `remarksBeforeLeave` | Preserved so leave cancellation can restore the original status |
+| Default shift | 08:00–17:00, configurable per employee schedule |
+| Late after | Shift start + 10-minute grace (`GRACE_MIN` in `hrmUtils.js`) |
+| Default workdays | Monday–Saturday (`1,2,3,4,5,6`), configurable per schedule |
+| Leave balances | Per employee, per leave type, per calendar year (`entitled` / `used`, `remaining` computed) |
+| Overlapping leave | Refused while another pending or approved leave covers the same dates |
+| Insufficient balance | Filing and approval are both refused when days exceed the remaining balance |
+| Attendance | One record per employee per day (unique index on `employeeId, date`) |
+| Resignation | Employee submits → admin approves or rejects; approved resignations update employment status |
+| Leave and attendance | Approved leave marks attendance days as `on_leave`, preserving the original status so cancellation can restore it |
 
-### `hrm_attendance_audit`
+## Requirements
 
-Audit log for attendance changes: `attendanceId` (soft ref), `action`, `oldValues`/`newValues` (JSON), `changedBy` → `Users`, plus `employeeId` and `createdAt` indexes.
+- Node.js 18 or newer
+- MySQL 8 (for example Laragon), with user `root` and no password by default
 
-### Leave management
-
-- **`hrm_leave_types`** — `name` (unique), `description`, `defaultDays` (DECIMAL(6,1)), `isPaid`, `isActive`
-- **`hrm_leave_balances`** — per `(employeeId, leaveTypeId, year)` unique row: `entitled`, `used` (DECIMAL(6,1)); `remaining = entitled - used` is computed at read time
-- **`hrm_leave_requests`** — `startDate`, `endDate`, `days`, `reason`, `status` (`pending`/`approved`/`rejected`/`cancelled`), `reviewedAt`, `reviewRemarks`, `reviewedBy` → `Users`
-- **`hrm_leave_audit`** — same audit pattern as attendance: `leaveRequestId`, `action`, JSON `oldValues`/`newValues`, `actorId` → `Users`
-
-### `hrm_project_assignments`
-
-Employee ↔ project assignments with `projectId` (soft ref to the owning module's projects), `projectName`, `siteName`, `roleOnProject`, `startDate`, `endDate`, `status` (`active`/`completed`/`cancelled`), `notes`.
-
-### Associations
-
-- `Department` 1—N `Position`, `Employee`
-- `Position` 1—N `Employee`
-- `Employee` N—1 `Department`, `Position`, `User` (login), self-FK `supervisor`
-- `Employee` 1—N `EmployeeDocument`, `WorkSchedule`, `Attendance`, `AttendanceAudit`, `LeaveBalance`, `LeaveRequest`, `LeaveAudit`, `Assignment`
-- `LeaveType` 1—N `LeaveBalance`, `LeaveRequest`
-- Delete behavior: `RESTRICT` on org/child relations, `SET NULL` on reviewer/actor/upload FKs
-
-## Tech Stack
-
-- **Runtime:** Node.js (ES modules)
-- **Framework:** Express 4 on the XianFire framework (`bin/xian.js`)
-- **Database:** MySQL via Sequelize 6 + mysql2
-- **Views:** Handlebars (`hbs`) with `.xian` templates
-- **Auth:** Session-based auth (express-session), bcrypt password hashing, API key auth
-- **Other:** Multer (uploads), Nodemailer (password reset emails), connect-flash
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- MySQL 8 (or compatible)
-
-### Installation
+## Getting started
 
 ```powershell
+git clone https://github.com/tech4lv/eventdriven_hrm.git
+cd Rekta-HRM
 npm install
 ```
 
-### Environment Setup
+Start MySQL (in Laragon: **Start All**).
 
-Copy `.env.example` to `.env` and fill in the values:
+Copy `.env.example` to `.env` and change the values if your database is different:
 
 ```powershell
 copy .env.example .env
 ```
 
-Key variables:
-
-| Variable | Purpose |
-|---|---|
-| `PORT` | Server port (default `3000`; your dev setup uses `3001`) |
-| `APP_BASE_URL` | Public base URL used in password-reset emails |
-| `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` | MySQL connection |
-| `SESSION_SECRET` | Required in production, min 32 chars |
-| `SESSION_STORE` | `memory` (dev) or `mysql` (production default) |
-| `SMTP_*` | Optional — emails password-reset links when configured |
-
-Generate secrets with:
+Create the database and tables:
 
 ```powershell
-node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
+npm run migrate
 ```
 
-### Database Setup
+It asks whether to create the database, then runs `sequelize.sync()` — non-destructive, it only creates missing tables and never deletes data.
+
+Seed demo data (departments, positions, leave types, sample employees) — this also creates a demo admin if no admin exists yet:
 
 ```powershell
-npm run migrate      # run core migrations
-npm run hrm:migrate  # run HRM migrations
-npm run hrm:seed     # optional: seed HRM data
+npm run hrm:seed
+# or promote your own registered account:
+npm run hrm:seed -- --admin you@email.com
 ```
 
-### Run
+Start the app:
 
 ```powershell
-npm run dev    # nodemon, auto-restart on changes
-# or
-npm start
+npm run dev
 ```
 
-The app runs at `http://localhost:<PORT>` (the server logs the actual URL on startup, e.g. `🔥 XianFire running at http://localhost:3001`).
+Open `http://localhost:3000` (or the port shown at startup) and sign in.
+
+## Configuration
+
+Settings are read from `.env` in the project folder. Values already set in the shell win.
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `PORT` | `3000` | Web server port |
+| `APP_BASE_URL` | `http://localhost:5000` | Public base URL used in password-reset emails |
+| `TRUST_PROXY` | empty | Set only when behind a trusted reverse proxy |
+| `COOKIE_SECURE` | empty | Override secure cookies (defaults to true in production) |
+| `DB_HOST` / `DB_PORT` | `localhost` / `3306` | MySQL host and port |
+| `DB_NAME` | `Rekta` | Database name |
+| `DB_USER` / `DB_PASSWORD` | `root` / empty | MySQL credentials |
+| `DB_SSL` / `DB_SSL_REJECT_UNAUTHORIZED` | `false` / `true` | MySQL SSL options |
+| `SESSION_SECRET` | empty | Signs the login cookie. Required in production (min 32 chars) |
+| `SESSION_STORE` | `memory` | `memory` for dev, `mysql` persists sessions in the `sessions` table |
+| `SMTP_*` | empty | Optional — emails password-reset links when configured |
+| `PASSWORD_RESET_EXPOSE_LINK` | auto | Show the reset link in the browser when SMTP is not configured (dev only) |
+
+Never commit `.env`; it is listed in `.gitignore`.
 
 ## Scripts
 
-| Script | Description |
+| Command | What it does |
 |---|---|
-| `npm run dev` | Start with nodemon |
-| `npm start` | Start with node |
-| `npm test` | Run the test suite (`node --test`) |
-| `npm run migrate` | Run core migrations |
-| `npm run hrm:migrate` | Run HRM migrations |
-| `npm run hrm:seed` | Seed HRM data |
-| `npm run route:list` | List registered routes |
-| `npm run route:cache` | Rebuild route cache |
-| `npm run format` | Format JS + `.xian` templates with Prettier |
-| `npm run create:*` | Scaffold models, controllers, middleware |
+| `npm run dev` | Starts the app with nodemon; restarts on file changes |
+| `npm start` | Starts the app without auto-restart |
+| `npm test` | Runs the `node --test` suite (utils, validators, CSV safety, migration safety, HRM db tests) |
+| `npm run migrate` | Creates the database and missing tables |
+| `npm run hrm:migrate` | Runs the HRM migrations |
+| `npm run hrm:seed` | Seeds demo HRM data and ensures an admin exists |
+| `npm run route:list` | Lists every route |
+| `npm run route:cache` | Rebuilds the route cache |
+| `npm run format` | Formats JS and `.xian` templates with Prettier |
+| `npm run create:model` / `create:controller` / `create:add-middleware` / `create:upload-middleware` | XianFire generators for new files |
 
-## Project Structure
+## Project structure
 
 ```
-├── bin/xian.js          # XianFire CLI entry
-├── index.js             # App entry point
-├── controllers/
-│   ├── authController.js    # Login / register / password reset
-│   ├── homeController.js
-│   └── hrm/                 # HRM controllers (dashboard, employees,
-│                            # attendance, leave, org, assignments,
-│                            # reports, users, shared helpers)
-├── middleware/           # hrmAuth (roles/CSRF), apiKeyAuth
-├── models/
-│   ├── hrm/index.js      # Sequelize model definitions
-│   ├── hrm/migrate-hrm.js / seed-hrm.js
-│   ├── hrm/services/     # hrmService (API logic), hrmUtils, projectsAdapter
-│   ├── db.js             # Sequelize connection
-│   ├── sessionStore.js   # memory / mysql session stores
-│   └── userModel.js
-├── routes/
-│   ├── index.js          # Mounts /hrm and /api/hrm
-│   └── hrm.js            # All HRM routes + API endpoints
-├── views/                # .xian Handlebars templates (incl. views/hrm/*)
-├── public/               # Static assets
-└── tests/                # node:test test files
+env.js            loads .env before anything else
+controllers/     request handling (authController, homeController, hrm/*)
+middleware/      login and role checks (hrmAuth, apiKeyAuth)
+models/          Sequelize models and relations (User, session store, db)
+models/hrm/      HRM models, migrations, seeders and services
+routes/          every URL and the role allowed to open it
+views/           .xian pages; partials/ holds the shared layout pieces
+public/          static assets (tailwind.css)
+index.js         Express app: sessions, flash messages, view engine, routes
+migrate.js       safe database setup
+tests/           node:test test files
 ```
 
-## Contributing
+The app follows MVC: a request goes to a route, the route's role check runs, the controller reads or writes through the models, and a `.xian` view renders the page.
 
-1. Create a branch for your changes
-2. Run `npm test` and `npm run format` before committing
-3. Commit with a clear message and open a pull request
